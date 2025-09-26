@@ -23,27 +23,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  // const { challengeInput } = parseResult.data;
-  // const inputBody = challengeInput.toString(); // Ensure it's a string
+  const accToken = authenticator.generate(sharedKey);
+  const keyuri = authenticator.keyuri("administrator", "SSS-IT", sharedKey)
+  const result = authenticator.verify({ token: parseResult.data.token, secret: sharedKey })
+  console.log(sharedKey, accToken, keyuri, result)
 
-  // const now = Date.now() / 1000;
-  // const ts = Math.floor(now);
-  // const nonce = cryptoRandomBase64(12);
-  // const inputBodyBase64 = inputBody ? Buffer.from(inputBody, 'utf-8').toString('base64') : '';
-  // const clientInput = `${ts}:${nonce}:${inputBodyBase64}`;
-  // const slot = Math.floor(ts / SLOT_SECONDS);
-  // const claimedPuzzleHex = await puzzleForSlot(sharedKey, slot, clientInput);
-
-  // const accToken = authenticator.generate(secret);
-  // const keyuri = authenticator.keyuri("test", "Solusi Sistem Internal Tools by Jere", secret)
-  // console.log(accToken, keyuri)
-
-  //const secret = authenticator.generateSecret();
-  const secret = "NASQOTABPUSDUDIW"
-  const accToken = authenticator.generate(secret);
-  const keyuri = authenticator.keyuri("administrator", "SSS-IT", secret)
-  const result = authenticator.verify({ token: parseResult.data.token, secret: secret })
-  console.log(secret, accToken, keyuri, result)
+  console.log("====")
+  const a1 = authenticator.keyuri("test1", "SSS-IT", sharedKey);
+  const a2 = authenticator.keyuri("test2", "SSS-IT", sharedKey);
+  const a3 = authenticator.keyuri("test3", "SSS-IT", sharedKey);
+  console.log(a1, a2, a3)
 
   return {
     result,

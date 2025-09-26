@@ -50,7 +50,7 @@ export default defineNuxtConfig({
      * Key here available server side 
      */
     databaseUrl: "postgresql://postgres:postgres@localhost:5432/test",
-    secretKey: "the quick brown fox jumps over a lazy dog",
+    secretKey: "NASQOTABPUSDUDIW",
     public: {
       /**
        * Key here available client side 
