@@ -1,6 +1,5 @@
-// import { cryptoRandomBase64, puzzleForSlot, SLOT_SECONDS } from "../utils/crypto";
-import { authenticator } from 'otplib';
 import { z } from 'zod';
+import { $totp } from "../utils/oauth";
 
 const requestSchema = z.object({
   token: z.string().min(1),
@@ -15,7 +14,6 @@ export default defineEventHandler(async (event) => {
 
   const parseResult = await readValidatedBody(event, (body) => requestSchema.safeParse(body));
   if (!parseResult.success) {
-    // Log validation error for debugging (in production, log to a service like Sentry)
     console.error('Invalid request body:', parseResult.error);
     throw createError({
       statusCode: 400,
@@ -23,18 +21,17 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const accToken = authenticator.generate(sharedKey);
-  const keyuri = authenticator.keyuri("administrator", "SSS-IT", sharedKey)
-  const result = authenticator.verify({ token: parseResult.data.token, secret: sharedKey })
-  console.log(sharedKey, accToken, keyuri, result)
+  const delta: number | null = $totp.validate({ token: parseResult.data.token, window: 1 });
+  const counter = $totp.counter(); // period counter from timestamp 0
+  const remaining = $totp.remaining(); // remaining time in milliseconds until the next token is generated
+  const token = $totp.generate();
+  console.log(`Token: ${token}, Counter: ${counter}, Remaining: ${remaining}, Delta: ${delta}`);
 
-  console.log("====")
-  const a1 = authenticator.keyuri("test1", "SSS-IT", sharedKey);
-  const a2 = authenticator.keyuri("test2", "SSS-IT", sharedKey);
-  const a3 = authenticator.keyuri("test3", "SSS-IT", sharedKey);
-  console.log(a1, a2, a3)
+  const isValid = delta !== null;
 
   return {
-    result,
+    result: isValid,
+    delta,
+    token: isValid ? "admintoken" : undefined
   };
 });

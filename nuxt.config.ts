@@ -21,6 +21,10 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' }
   },
 
+  auth: {
+    webAuthn: true
+  },
+
   css: ['animate.css', '~/assets/css/main.css', 'animate.css/animate.min.css'],
   ui: {
     theme: {
@@ -49,8 +53,11 @@ export default defineNuxtConfig({
     /**
      * Key here available server side 
      */
-    databaseUrl: "postgresql://postgres:postgres@localhost:5432/test",
-    secretKey: "NASQOTABPUSDUDIW",
+    databaseUrl: "postgresql://postgres:postgres@server.local:5432/testdb2",
+    secretKey: "KNJVGLKJKQQECZDNNFXGS43UOJQXI33S",
+    session: {
+      password: "cface596bb444ba385402305b05d710f"
+    },
     public: {
       /**
        * Key here available client side 
@@ -63,6 +70,7 @@ export default defineNuxtConfig({
     '@nuxt/scripts',
     '@nuxt/ui',
     '@nuxt/eslint',
-    'nuxt-qrcode'
+    'nuxt-qrcode',
+    'nuxt-auth-utils'
   ]
 })

@@ -1,166 +1,278 @@
 <script setup lang="ts">
 import * as z from "zod";
-import type { FormSubmitEvent } from "@nuxt/ui";
+import type { FormSubmitEvent, Form } from "@nuxt/ui";
 
 definePageMeta({
   layout: "blank",
+  auth: false,
 });
 
-const schema = z.object({
-  token: z.string().min(1, "Token is required"),
-});
-type Schema = z.output<typeof schema>;
+const { fetch: refreshSession } = useUserSession();
 
-const state = reactive<Partial<Schema>>({
-  token: "",
-});
-
-const toast = useToast();
-const paired = ref(false);
+const currentStep = ref(1); // 1: Token Entry, 2: Name Entry, 3: Success
 const loading = ref(false);
-const message = ref("Waiting for pairing...");
 
-const name = ref("");
-const nameSubmitted = ref(false);
+const nameInputRef = ref<HTMLInputElement | null>(null);
+const tokenFormRef = ref<Form<TokenSchema> | null>(null);
+const toast = useToast();
 
-const open = ref(false);
-defineShortcuts({
-  o: () => (open.value = !open.value),
+const verifyToken = ref("");
+
+const tokenSchema = z.object({
+  token: z
+    .string()
+    .transform((val) => val.replace(/-/g, ""))
+    .pipe(z.string().length(6, "Enter the 6-character code from your device.")),
+});
+type TokenSchema = z.output<typeof tokenSchema>;
+
+const nameSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Please enter a name.")
+    .max(50, "Name must be 50 characters or less.")
+    .regex(/^[a-zA-Z0-9\s'-]+$/, "Name contains invalid characters."),
+});
+type NameSchema = z.output<typeof nameSchema>;
+
+const state = reactive({
+  token: "",
+  name: "",
 });
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function handleTokenSubmit(event: FormSubmitEvent<TokenSchema>) {
   loading.value = true;
-  paired.value = false;
-  message.value = "Verifying token...";
-
   try {
-    const res = await $fetch("/api/verify", {
-      method: "POST",
-      body: { token: event.data.token },
-    });
-    if (res.result) {
-      paired.value = true;
-      message.value = "Paired successfully! Please wait for a moment.";
+    const res = await $fetch<{ result: boolean; token?: string }>(
+      "/api/verify",
+      {
+        method: "POST",
+        body: { token: event.data.token },
+      }
+    );
+
+    if (res.result && res.token) {
+      verifyToken.value = res.token;
+
       toast.add({
-        title: "Success!",
-        description: "Device paired successfully.",
-        icon: "i-heroicons-check-circle",
+        title: "Code Verified!",
+        icon: "i-heroicons-check-circle-solid",
         color: "success",
       });
-      // open modal to ask for name
-      open.value = true;
+      currentStep.value = 2;
+      // Move focus to the name input on the next screen
+      await nextTick();
+      nameInputRef.value?.focus();
     } else {
-      throw new Error("Invalid token");
+      throw new Error("The code is invalid or has expired.");
     }
-  } catch (e) {
-    paired.value = false;
-    message.value = "Pairing failed. Please check your token and try again.";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
     toast.add({
-      title: "Failed",
-      description: "Invalid token or server error. Please try again.",
-      icon: "i-heroicons-x-circle",
+      title: "Verification Failed",
+      description: error.message || "Please check the code and try again.",
+      icon: "i-heroicons-x-circle-solid",
       color: "error",
     });
-    console.error(e);
   } finally {
     loading.value = false;
   }
 }
 
-async function onNameSubmit() {
-  if (!name.value.trim()) {
-    toast.add({ title: "Name required", description: "Please enter a name.", color: "error", icon: "i-heroicons-x-circle" });
-    return;
-  }
+async function handleNameSubmit(event: FormSubmitEvent<NameSchema>) {
+  loading.value = true;
   try {
-    await $fetch("/api/save-name", { method: "POST", body: { name: name.value } });
-    nameSubmitted.value = true;
-    open.value = false; // close modal
-    toast.add({ title: "Name saved", description: "Name saved successfully.", color: "success", icon: "i-heroicons-check-circle" });
-  } catch (e) {
-    toast.add({ title: "Save failed", description: "Could not save name.", color: "error", icon: "i-heroicons-x-circle" });
-    console.error(e);
+    const res = await $fetch("/api/request-access", {
+      method: "POST",
+      body: { name: event.data.name, token: verifyToken.value },
+    });
+    // toast.add({
+    //   title: 'Pairing Complete!',
+    //   description: `Device '${event.data.name}' is now connected.`,
+    //   icon: 'i-heroicons-party-popper-solid',
+    //   color: 'success',
+    //   duration: 5000,
+    // })
+
+    console.log(res.message);
+
+    await refreshSession();
+    await navigateTo('/')
+
+    currentStep.value = 3;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    toast.add({
+      title: "Error Saving Name",
+      description:
+        error.data?.message || "A server error occurred. Please try again.",
+      icon: "i-heroicons-exclamation-triangle-solid",
+      color: "error",
+    });
+  } finally {
+    loading.value = false;
   }
+}
+
+function resetForm() {
+  state.token = "";
+  state.name = "";
+  currentStep.value = 1;
 }
 </script>
 
 <template>
   <section
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 p-4 sm:p-6">
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 p-4"
+  >
     <UCard
-      class="w-full max-w-md bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-6 sm:p-8 text-slate-100 transition-all duration-300 hover:shadow-3xl">
-      <!-- Header with Icon -->
-      <div class="text-center mb-6">
-        <div class="mx-auto w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-4">
-          <UIcon name="i-heroicons-device-phone-mobile" class="w-8 h-8 text-blue-300" />
+      class="w-full max-w-sm bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 text-slate-100"
+    >
+      <div class="text-center mb-8">
+        <div
+          class="mx-auto w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4"
+        >
+          <UIcon
+            name="i-heroicons-qr-code"
+            class="w-7 h-7 text-blue-300 animate-pulse"
+          />
         </div>
-        <h1 class="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-          Token Pairing
+        <h1
+          class="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent"
+        >
+          Pair your Token
         </h1>
-        <p class="text-sm text-slate-400">
-          Securely connect by entering the pairing token.
+        <p
+          class="text-sm mt-2 transition-opacity duration-300 text-slate-400"
+          :class="{ 'opacity-0': currentStep === 3 }"
+        >
+          {{
+            currentStep === 1
+              ? "Enter the code from your device screen."
+              : "Almost done! Please enter your name."
+          }}
         </p>
       </div>
 
-      <!-- Form -->
-      <UForm :schema="schema" :state="state" class="space-y-6" @submit="onSubmit">
-        <UInput v-model="state.token" :disabled="loading" size="lg" type="text" variant="soft" color="neutral"
-          placeholder="e.g. ABC-123-XYZ" class="text-lg font-mono tracking-wider w-full"
-          :class="{ 'opacity-50 cursor-not-allowed': loading }" />
+      <div class="min-h-[160px]">
+        <Transition
+          mode="out-in"
+          enter-active-class="animate__animated animate__fadeInRight animate__faster"
+          leave-active-class="animate__animated animate__fadeOutLeft animate__faster"
+        >
+          <div v-if="currentStep === 1" key="step1">
+            <UForm
+              ref="tokenFormRef"
+              :schema="tokenSchema"
+              :state="state"
+              novalidate
+              @submit="handleTokenSubmit"
+            >
+              <div class="flex items-center justify-center">
+                <UFormField name="token" error="Please enter a valid code">
+                  <UInput
+                    v-model="state.token"
+                    placeholder="123-456"
+                    size="xl"
+                    :disabled="loading"
+                    autofocus
+                    input-class="w-[240px] text-center font-mono tracking-[0.3em] text-2xl placeholder:text-slate-600"
+                    name="token"
+                    inputmode="numeric"
+                  />
+                </UFormField>
+              </div>
 
-        <UButton type="submit" :loading="loading" :disabled="!state.token || loading" size="lg" color="primary"
-          variant="solid" class="w-full text-lg" :class="{ 'cursor-not-allowed': loading }">
-          <template #leading>
-            <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 font-semibold" />
-          </template>
-          Pair Token
-        </UButton>
-      </UForm>
+              <div class="pt-6">
+                <UButton
+                  type="submit"
+                  size="lg"
+                  block
+                  :loading="loading"
+                  :disabled="
+                    state.token.replace('-', '').length !== 6 || loading
+                  "
+                >
+                  {{ loading ? "Verifying..." : "Verify Code" }}
+                </UButton>
+              </div>
+            </UForm>
+          </div>
 
-      <!-- Status Indicator -->
-      <div id="pair-status" class="mt-6 p-4 bg-slate-800/30 rounded-2xl text-center transition-all duration-500" :class="[
-        {
-          'bg-green-500/20 border border-green-500/30 text-green-300 animate-pulse': paired,
-          'bg-yellow-500/20 border border-yellow-500/30 text-yellow-300': loading,
-          'bg-slate-800/50 border border-slate-700/50 text-slate-400': !paired && !loading,
-        }
-      ]" aria-live="polite">
+          <div v-else-if="currentStep === 2" key="step2" class="space-y-6">
+            <div>
+              <p class="text-xs text-slate-400 mb-1">Verified Code</p>
+              <div
+                class="flex items-center gap-2 p-2 bg-slate-800/50 rounded-md border border-slate-700"
+              >
+                <UIcon
+                  name="i-heroicons-lock-closed-solid"
+                  class="text-green-400"
+                />
+                <p class="font-mono text-slate-300">{{ state.token }}</p>
+              </div>
+            </div>
 
-        <div v-if="loading" class="flex items-center justify-center space-x-2">
-          <UProgress />
-          <span>{{ message }}</span>
-        </div>
-        <div v-else class="flex items-center justify-center space-x-2">
-          <UIcon :name="paired ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle'" :class="[
-            paired ? 'w-5 h-5 text-green-400' : 'w-5 h-5 text-slate-400'
-          ]" />
-          <span>{{ message }}</span>
-        </div>
-      </div>
+            <UForm
+              :schema="nameSchema"
+              :state="state"
+              class="space-y-2"
+              @submit="handleNameSubmit"
+            >
+              <div class="flex items-center justify-center">
+                <UFormField label="Your Name" name="name">
+                  <UInput
+                    ref="nameInputRef"
+                    v-model="state.name"
+                    placeholder="e.g., Alex"
+                    size="lg"
+                    :disabled="loading"
+                    input-class="w-[240px] text-center font-mono tracking-[0.3em] text-2xl placeholder:text-slate-600"
+                    maxlength="50"
+                  />
+                </UFormField>
+              </div>
 
-      <!-- Optional: show saved name -->
-      <div v-if="nameSubmitted" class="mt-4 text-sm text-green-300">
-        <UIcon name="i-heroicons-check-circle" class="w-4 h-4 inline mr-2" /> Name saved: <strong
-          class="ml-1 text-white">{{ name }}</strong>
+              <div class="!mt-6">
+                <UButton
+                  type="submit"
+                  size="lg"
+                  block
+                  :loading="loading"
+                  :disabled="!state.name || loading"
+                >
+                  Submit
+                </UButton>
+              </div>
+            </UForm>
+          </div>
+
+          <div v-else key="step3" class="text-center p-4">
+            <div
+              class="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4"
+            >
+              <UIcon
+                name="i-heroicons-check-badge-solid"
+                class="w-9 h-9 text-green-400 animate-bounce"
+              />
+            </div>
+            <h2 class="text-xl font-semibold text-white">All Set!</h2>
+            <p class="text-slate-300 mt-1">
+              Your account
+              <strong class="text-white">{{ state.name }}</strong> is now
+              connected.
+            </p>
+            <UButton
+              variant="link"
+              icon="i-heroicons-arrow-path-20-solid"
+              class="mt-6"
+              @click="resetForm"
+            >
+              Refresh
+            </UButton>
+          </div>
+        </Transition>
       </div>
     </UCard>
-
-    <!-- Modal for device name -->
-    <UModal v-model:open="open">
-      <!-- If your UModal requires a trigger, leave blank or remove -->
-      <template #content>
-        <div class="p-6 w-full max-w-md bg-slate-900 text-slate-100 rounded-lg">
-          <h2 class="text-xl font-semibold mb-2">Name this device</h2>
-          <p class="text-sm text-slate-400 mb-4">Enter a friendly name to identify this device.</p>
-
-          <UInput v-model="name" placeholder="Device name" size="lg" variant="soft" color="neutral" class="w-full mb-4" />
-
-          <div class="flex justify-end gap-2">
-            <UButton variant="ghost" color="neutral" @click="() => (open = false)">Cancel</UButton>
-            <UButton color="primary" :disabled="!name.trim()" @click="onNameSubmit">Save</UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
   </section>
 </template>

@@ -1,3 +1,5 @@
+<script setup lang="ts"></script>
+
 <template>
   <header
     class="border-b border-gray-200 dark:border-gray-800 transition-colors duration-200"
@@ -16,6 +18,25 @@
         <!-- Right-side actions -->
         <div class="flex items-center gap-2">
           <ColorModeButton />
+
+          <!-- Logout Button -->
+          <AuthState v-slot="{ loggedIn, clear }">
+            <UButton
+              v-if="loggedIn"
+              size="sm"
+              color="error"
+              variant="soft"
+              @click="
+                async () => {
+                  await clear();
+                  await navigateTo('/login');
+                }
+              "
+            >
+              <UIcon name="i-lucide-log-out" class="mr-1" />
+              Logout
+            </UButton>
+          </AuthState>
         </div>
       </div>
     </UContainer>
