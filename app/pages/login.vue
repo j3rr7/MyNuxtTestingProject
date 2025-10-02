@@ -31,7 +31,8 @@ const nameSchema = z.object({
     .string()
     .min(1, "Please enter a name.")
     .max(50, "Name must be 50 characters or less.")
-    .regex(/^[a-zA-Z0-9\s'-]+$/, "Name contains invalid characters."),
+    .regex(/^[a-zA-Z0-9\s'-]+$/, "Name contains invalid characters.")
+    .nonempty("Please enter a name."),
 });
 type NameSchema = z.output<typeof nameSchema>;
 
@@ -97,9 +98,12 @@ async function handleNameSubmit(event: FormSubmitEvent<NameSchema>) {
     console.log(res.message);
 
     await refreshSession();
-    await navigateTo('/')
 
     currentStep.value = 3;
+
+    await nextTick(async () => {
+      await navigateTo({path: '/'}, { replace: true });
+    })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     toast.add({
@@ -224,6 +228,7 @@ function resetForm() {
                   <UInput
                     ref="nameInputRef"
                     v-model="state.name"
+                    name="name"
                     placeholder="e.g., Alex"
                     size="lg"
                     :disabled="loading"

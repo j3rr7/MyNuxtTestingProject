@@ -1,7 +1,10 @@
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event);
 
-  console.log(url);
+  if (url.pathname.startsWith("/api/")) {
+    // Only on api routes
+    
+  }
   
   // const session = await requireUserSession(event)
   // if (!session) {

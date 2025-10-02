@@ -4,6 +4,11 @@ const requestSchema = z.object({
   name: z.string().min(1, "Name is required and must not be empty"),
   code: z.string().min(1, "Code is required and must not be empty"),
   database: z.string().min(1, "Database is required and must not be empty"),
+  expiresAt: z.coerce.date().optional().default(() => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() + 1);
+    return date;
+  }),
 });
 
 export default defineEventHandler(async (event) => {
@@ -15,10 +20,8 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { name, code, database } = parseResult.data;
-  console.log("Create company:", name, code, database);
-
   const nitroApp = useNitroApp();
+  const { name, code, database, expiresAt } = parseResult.data;
 
   try {
     if (!nitroApp.sql) {
@@ -29,18 +32,15 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const result = await nitroApp.sql.unsafe(
-      `SELECT * FROM public.create_company_and_schema($1, $2, $3, now() + interval '1 year');`,
-      [name, code, database]
+    await nitroApp.sql.unsafe(
+      `SELECT * FROM public.create_company_and_schema($1, $2, $3, $4);`,
+      [name, code, database, expiresAt.toISOString()]
     );
-
-    console.log("Database operation successful. Result:", result.length);
 
     setResponseStatus(event, 201);
 
     return {
       message: "Company created successfully.",
-      data: result[0] || null,
     }
   } 
   catch(error: unknown) {

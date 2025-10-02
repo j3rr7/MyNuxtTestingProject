@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { CalendarDate } from '@internationalized/date'
 import type { Company, Meta, PaginatedResponse } from "~~/shared/types";
+import type { TableColumn } from "@nuxt/ui";
 import { useDebounceFn } from "@vueuse/core";
 
+const table = useTemplateRef("table");
 const companies = ref<Company[]>([]);
 const meta = ref<Meta | null>(null);
 const isLoading = ref(true);
@@ -10,6 +13,76 @@ const error = ref<string | null>(null);
 const searchQuery = ref("");
 const currentPage = ref(1);
 const itemsPerPage = ref(15);
+
+// Create Company
+const now = new Date();
+const isCreateDialogOpen = ref(false);
+const companyName = ref("");
+const companyCode = ref("");
+const databaseName = ref("");
+const expiresAt = shallowRef(new CalendarDate(now.getFullYear() + 1, now.getMonth() + 1, now.getDate()));
+
+const columns: TableColumn<Company>[] = [
+  {
+    accessorKey: "company_id",
+    header: "#",
+  },
+  {
+    accessorKey: "company_name",
+    header: "Company",
+  },
+  {
+    accessorKey: "company_code",
+    header: "Code",
+  },
+  {
+    accessorKey: "database_name",
+    header: "Database",
+  },
+  {
+    accessorKey: "subscription_expires_at",
+    header: "Expires At",
+  },
+  {
+    accessorKey: "is_active",
+    header: "Status",
+  },
+  {
+    accessorKey: "actions",
+    header: "Actions",
+  },
+];
+
+const openCreateDialog = () => {
+  isCreateDialogOpen.value = true;
+};
+
+const createCompany = async () => {
+  try {
+    const payload = {
+      name: companyName.value,
+      code: companyCode.value,
+      database: databaseName.value,
+      expiresAt: expiresAt.value.toDate("UTC").toISOString(),
+    };
+
+    await $fetch("/api/companies", {
+      method: "POST",
+      body: payload,
+    });
+
+    // Reset form
+    companyName.value = "";
+    companyCode.value = "";
+    databaseName.value = "";
+
+    isCreateDialogOpen.value = false;
+    fetchCompanies();
+  } catch (err: unknown) {
+    console.error("Create Error:", err);
+    if (err instanceof Error) error.value = err.message;
+  }
+};
 
 const fetchCompanies = async () => {
   isLoading.value = true;
@@ -87,7 +160,7 @@ onMounted(() => {
           <UInput
             v-model="searchQuery"
             icon="i-lucide-search"
-            variant="outline" 
+            variant="outline"
             type="text"
             placeholder="Search by company name or code..."
             :ui="{
@@ -96,15 +169,129 @@ onMounted(() => {
           />
         </div>
         <div>
-          <UButton
-            type="button"
-          >
+          <UButton type="button" @click="openCreateDialog">
             Create Company
           </UButton>
         </div>
       </div>
 
-      <div class="rounded-lg shadow-lg overflow-hidden border">
+      <UModal
+        v-model:open="isCreateDialogOpen"
+        :ui="{ wrapper: 'sm:max-w-xl' }"
+      >
+        <template #content>
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-900/20"
+                  >
+                    <UIcon
+                      name="i-heroicons-building-office-2-solid"
+                      class="h-5 w-5 text-primary-600 dark:text-primary-400"
+                    />
+                  </div>
+                  <div>
+                    <h2
+                      class="text-lg font-semibold text-gray-900 dark:text-white"
+                    >
+                      Create Company
+                    </h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                      Add a new company to your organization
+                    </p>
+                  </div>
+                </div>
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  icon="i-heroicons-x-mark-20-solid"
+                  class="-my-1"
+                  @click="isCreateDialogOpen = false"
+                />
+              </div>
+            </template>
+
+            <UForm :state="{}" class="space-y-6" @submit="createCompany">
+              <div class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+                <UFormField
+                  label="Company Name"
+                  name="companyName"
+                  required
+                  class="sm:col-span-2 w-full"
+                >
+                  <UInput
+                    v-model="companyName"
+                    placeholder="e.g., Acme Corporation"
+                    icon="i-heroicons-building-office-2"
+                    size="lg"
+                    class="w-full"
+                  />
+                </UFormField>
+
+                <UFormField
+                  label="Company Code"
+                  name="companyCode"
+                  required
+                  help="Unique identifier (e.g., ACME001)"
+                >
+                  <UInput
+                    v-model="companyCode"
+                    placeholder="ACME001"
+                    icon="i-heroicons-hashtag"
+                    size="lg"
+                    :maxlength="20"
+                  />
+                </UFormField>
+
+                <UFormField
+                  label="Database Name"
+                  name="databaseName"
+                  required
+                  help="Database identifier for this company"
+                >
+                  <UInput
+                    v-model="databaseName"
+                    placeholder="acme_db"
+                    icon="i-heroicons-circle-stack"
+                    size="lg"
+                  />
+                </UFormField>
+
+                <UFormField
+                  label="Subscription Expires"
+                  name="expiresAt"
+                  required
+                  class="sm:col-span-2"
+                >
+                  <DatePicker v-model="expiresAt" />
+                </UFormField>
+              </div>
+
+              <div class="flex justify-end gap-3">
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="soft"
+                  @click="isCreateDialogOpen = false"
+                >
+                  Cancel
+                </UButton>
+                <UButton
+                  type="submit"
+                  color="primary"
+                  icon="i-heroicons-plus-circle"
+                >
+                  Create Company
+                </UButton>
+              </div>
+            </UForm>
+          </UCard>
+        </template>
+      </UModal>
+
+      <div class="shadow-lg overflow-hidden">
         <div v-if="isLoading" class="p-8 text-center">
           <svg
             class="animate-spin h-8 w-8 mx-auto"
@@ -119,12 +306,12 @@ onMounted(() => {
               r="10"
               stroke="currentColor"
               stroke-width="4"
-            ></circle>
+            />
             <path
               class="opacity-75"
               fill="currentColor"
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
+            />
           </svg>
           <p class="mt-4">Loading companies...</p>
         </div>
@@ -135,133 +322,31 @@ onMounted(() => {
         >
           <h3 class="text-xl font-semibold">An Error Occurred</h3>
           <p class="mt-2">{{ error }}</p>
-          <button
-            class="mt-4 px-4 py-2 rounded-md font-semibold bg-red-600 text-white hover:bg-red-500"
+          <UButton
+            size="sm"
+            color="red"
+            variant="soft"
+            class="mt-4"
             @click="fetchCompanies"
           >
             Try Again
-          </button>
+          </UButton>
         </div>
 
         <div v-else>
           <div class="overflow-x-auto">
-            <table class="min-w-full divide-y">
-              <thead>
-                <tr>
-                  <th
-                    scope="col"
-                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold sm:pl-6"
-                  >
-                    Company Name
-                  </th>
-                  <th
-                    scope="col"
-                    class="px-3 py-3.5 text-left text-sm font-semibold"
-                  >
-                    Status
-                  </th>
-                  <th
-                    scope="col"
-                    class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold"
-                  >
-                    Company Code
-                  </th>
-                  <th
-                    scope="col"
-                    class="hidden lg:table-cell px-3 py-3.5 text-left text-sm font-semibold"
-                  >
-                    Database
-                  </th>
-                  <th
-                    scope="col"
-                    class="hidden lg:table-cell px-3 py-3.5 text-left text-sm font-semibold"
-                  >
-                    Subscription Expires
-                  </th>
-                  <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                    <span class="sr-only">Edit</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody v-if="companies.length > 0" class="divide-y">
-                <tr v-for="company in companies" :key="company.company_id">
-                  <td
-                    class="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6"
-                  >
-                    <div class="font-medium">
-                      {{ company.company_name }}
-                    </div>
-                    <div class="lg:hidden mt-1">
-                      {{ company.database_name }}
-                    </div>
-                  </td>
-                  <td class="whitespace-nowrap px-3 py-4 text-sm">
-                    <span
-                      :class="[
-                        company.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800',
-                        'inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ring-current',
-                      ]"
-                    >
-                      {{ company.is_active ? "Active" : "Inactive" }}
-                    </span>
-                  </td>
-                  <td
-                    class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm"
-                  >
-                    {{ company.company_code }}
-                  </td>
-                  <td
-                    class="hidden lg:table-cell whitespace-nowrap px-3 py-4 text-sm"
-                  >
-                    {{ company.database_name }}
-                  </td>
-                  <td
-                    class="hidden lg:table-cell whitespace-nowrap px-3 py-4 text-sm"
-                  >
-                    {{ fmt(company.subscription_expires_at) }}
-                  </td>
-                  <td
-                    class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6"
-                  >
-                    <a href="#" class="text-indigo-600 hover:text-indigo-900"
-                      >Edit<span class="sr-only"
-                        >, {{ company.company_name }}</span
-                      ></a
-                    >
-                  </td>
-                </tr>
-              </tbody>
-              <tbody v-else>
-                <tr>
-                  <td colspan="6" class="text-center py-12 px-6">
-                    <svg
-                      class="mx-auto h-12 w-12"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        vector-effect="non-scaling-stroke"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"
-                      />
-                    </svg>
-                    <h3 class="mt-2 text-lg font-semibold">
-                      No Companies Found
-                    </h3>
-                    <p class="mt-1 text-sm">
-                      No results for your search query. Try using different
-                      keywords.
-                    </p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <UTable ref="table" :columns="columns" :data="companies">
+              <template #action-cell="{ row }">
+                <UButton
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  @click="() => console.log(row)"
+                >
+                  Edit
+                </UButton>
+              </template>
+            </UTable>
           </div>
         </div>
       </div>
