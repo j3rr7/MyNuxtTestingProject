@@ -54,8 +54,9 @@ export default defineNuxtConfig({
     /**
      * Key here available server side 
      */
-    databaseUrl: "postgresql://postgres:postgres@server.local:5432/testdb2",
-    secretKey: "KNJVGLKJKQQECZDNNFXGS43UOJQXI33S",
+    databaseUrl: "postgresql://postgres:postgres@server.lan:5432/testdb",
+    databaseDevUrl: "postgresql://postgres:postgres@server.lan:5432/testdb",
+    secretKey: "AKBHMONFCHJJKXA4SKVYMIPLHWWIDLTO",
     session: {
       password: "cface596bb444ba385402305b05d710f",
       cookie: {
@@ -76,6 +77,7 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@nuxt/eslint',
     'nuxt-qrcode',
-    'nuxt-auth-utils'
+    'nuxt-auth-utils',
+    '@pinia/nuxt'
   ]
 })

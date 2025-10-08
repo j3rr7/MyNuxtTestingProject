@@ -15,9 +15,8 @@ const requestSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  // throw createError({ statusCode: 500, statusMessage: "Internal server error" });
-
   const parseResult = requestSchema.safeParse(getQuery(event));
+
   if (!parseResult.success) {
     throw createError({
       statusCode: 400,
@@ -27,9 +26,6 @@ export default defineEventHandler(async (event) => {
 
   const { search, page, limit } = parseResult.data;
   const offset = (page - 1) * limit;
-
-  const nitroApp = useNitroApp();
-
   // Build query
   const params = [];
   let where = "";
@@ -37,6 +33,7 @@ export default defineEventHandler(async (event) => {
   if (search) {
     params.push(`%${search}%`); // For $1
     params.push(`%${search}%`); // For $2
+
     where = `WHERE company_name ILIKE $1 OR company_code ILIKE $2`;
   }
 
@@ -46,7 +43,7 @@ export default defineEventHandler(async (event) => {
   params.push(limit);
   params.push(offset);
 
-  const sql = `
+  const sqlQuery = `
     SELECT
       company_id,
       company_name,
@@ -61,22 +58,51 @@ export default defineEventHandler(async (event) => {
     LIMIT $${limitIdx} OFFSET $${offsetIdx}
   `;
 
-  const companies = await nitroApp.sql!.unsafe(sql, params);
+  try {
+    const sql = useDatabase(event);
 
-  const total = await nitroApp.sql!.unsafe(
-    `SELECT COUNT(*) FROM public.companies ${where} LIMIT $${limitIdx} OFFSET $${offsetIdx}`, 
-    params
-  );
+    if (!sql) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Database connection is not available.",
+      });
+    }
 
-  if (companies.length === 0) {
+    const companies = await sql.unsafe(sqlQuery, params);
+
+    const total = await sql.unsafe(
+      `SELECT COUNT(*) FROM public.companies ${where} LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      params
+    );
+
+    if (companies.length === 0) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: "No companies found",
+      });
+    }
+
+    return {
+      data: companies,
+      meta: {
+        page,
+        limit,
+        offset,
+        total: total[0].count,
+        totalPages: Math.ceil(total[0].count / limit),
+      },
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Service temporarily unavailable",
+      });
+    }
+
     throw createError({
-      statusCode: 404,
-      statusMessage: "No companies found",
+      statusCode: 500,
+      statusMessage: "Service temporarily unavailable",
     });
   }
-
-  return {
-    data: companies,
-    meta: { page, limit, offset, total: total[0].count, totalPages: Math.ceil(total[0].count / limit)},
-  };
 });

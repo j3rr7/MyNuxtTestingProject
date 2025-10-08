@@ -22,10 +22,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const delta: number | null = $totp.validate({ token: parseResult.data.token, window: 1 });
+
+  // === DEBUG INFO ===
   const counter = $totp.counter(); // period counter from timestamp 0
   const remaining = $totp.remaining(); // remaining time in milliseconds until the next token is generated
   const token = $totp.generate();
   console.log(`Token: ${token}, Counter: ${counter}, Remaining: ${remaining}, Delta: ${delta}`);
+  // === DEBUG INFO ===
 
   const isValid = delta !== null;
 

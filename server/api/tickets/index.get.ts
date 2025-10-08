@@ -125,15 +125,23 @@ function parseSorting(query: QueryParams): { sortBy: SortColumn; order: 'ASC' | 
 }
 
 export default defineEventHandler(async (event) => {
-  const nitroApp = useNitroApp();
   const query = getQuery(event) as QueryParams;
 
   try {
+    const sql = useDatabase(event);
+
+    if (!sql) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Database connection is not available.',
+      });
+    }
+
     const { page, limit, offset } = parsePagination(query);
     const { filters, whereClause, values } = parseFilters(query);
     const { sortBy, order } = parseSorting(query);
 
-    const tickets = await nitroApp.sql!.unsafe(
+    const tickets = await sql.unsafe(
       `
       SELECT
         id,
@@ -154,7 +162,7 @@ export default defineEventHandler(async (event) => {
       [...values, limit, offset]
     );
 
-    const [{ count }] = await nitroApp.sql!.unsafe(
+    const [{ count }] = await sql.unsafe(
       `
       SELECT COUNT(*) FROM public.tickets
       ${whereClause}
@@ -183,15 +191,17 @@ export default defineEventHandler(async (event) => {
 
     return response;
   } catch (error) {
-    console.error('Failed to fetch tickets:', error);
-
-    if (error instanceof Error && 'statusCode' in error) {
-      throw error;
+    
+    if (error instanceof Error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Service temporarily unavailable',
+      });
     }
 
     throw createError({
       statusCode: 500,
-      message: 'Failed to fetch tickets. Please try again later.',
+      statusMessage: 'Service temporarily unavailable',
     });
   }
 });

@@ -5,7 +5,8 @@ const requestSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const id = event.context.params?.id;
+  const id = getRouterParam(event, 'id');
+
   if (!id) {
     throw createError({
       statusCode: 400,
@@ -16,6 +17,7 @@ export default defineEventHandler(async (event) => {
   const parseResult = await readValidatedBody(event, (body) =>
     requestSchema.safeParse(body)
   );
+  
   if (!parseResult.success) {
     throw createError({
       statusCode: 400,

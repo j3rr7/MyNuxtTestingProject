@@ -20,19 +20,19 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const nitroApp = useNitroApp();
   const { name, code, database, expiresAt } = parseResult.data;
 
   try {
-    if (!nitroApp.sql) {
-      console.error("Database connection (nitroApp.sql) is not available.");
+    const sql = useDatabase(event);
+
+    if (!sql) {
       throw createError({
         statusCode: 500,
         statusMessage: "Database connection is not available.",
       });
     }
 
-    await nitroApp.sql.unsafe(
+    await sql.unsafe(
       `SELECT * FROM public.create_company_and_schema($1, $2, $3, $4);`,
       [name, code, database, expiresAt.toISOString()]
     );
@@ -43,11 +43,18 @@ export default defineEventHandler(async (event) => {
       message: "Company created successfully.",
     }
   } 
-  catch(error: unknown) {
-    console.error("Database operation failed:", error);
+  catch(error) {
+
+    if (error instanceof Error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Service temporarily unavailable",
+      });
+    }
+
     throw createError({
       statusCode: 500,
-      statusMessage: "Database operation failed: " + error,
-    });
+      statusMessage: "Service temporarily unavailable",
+    })
   }
 });

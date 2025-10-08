@@ -1,3 +1,4 @@
-export default defineEventHandler(async (_) => {
-  return { message: "Delete ticket by ID - to be implemented" };
+export default defineEventHandler(async (event) => {
+  const id = getRouterParam(event, 'id');
+  return { message: `Delete ticket by ID ${id} - to be implemented` };
 });

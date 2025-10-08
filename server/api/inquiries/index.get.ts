@@ -123,10 +123,18 @@ function buildWhereClause(filters: { email: string | null; company: string | nul
 }
 
 export default defineEventHandler(async (event) => {
-  const nitroApp = useNitroApp();
   const query = getQuery(event) as QueryParams;
 
   try {
+    const sql = useDatabase(event);
+
+    if (!sql) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Database connection is not available.",
+      });
+    }
+
     const { page, limit, offset } = parsePagination(query);
     const filters = parseFilters(query);
     const { sortBy, order } = parseSorting(query);
@@ -137,7 +145,7 @@ export default defineEventHandler(async (event) => {
     const orderByExpression = SORT_EXPRESSIONS[sortBy];
     const orderBy = `${orderByExpression} ${order}`;
 
-    const inquiries = await nitroApp.sql!.unsafe(
+    const inquiries = await sql.unsafe(
       `
       SELECT
         id,
@@ -157,7 +165,7 @@ export default defineEventHandler(async (event) => {
       [...values, limit, offset]
     );
 
-    const [{ count }] = await nitroApp.sql!.unsafe(
+    const [{ count }] = await sql.unsafe(
       `
       SELECT COUNT(*) FROM public.contact_submissions
       ${whereClause}
@@ -186,15 +194,17 @@ export default defineEventHandler(async (event) => {
 
     return response;
   } catch (error) {
-    console.error('Failed to fetch inquiries:', error);
-
-    if (error instanceof Error && 'statusCode' in error) {
-      throw error;
+    
+    if (error instanceof Error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Service temporarily unavailable",
+      });
     }
 
     throw createError({
       statusCode: 500,
-      message: 'Failed to fetch inquiries',
+      statusMessage: "Service temporarily unavailable",
     });
   }
 });

@@ -1,3 +1,4 @@
-export default defineEventHandler(async (_) => {
-    return { message: "Get ticket by ID - to be implemented" };
+export default defineEventHandler(async (event) => {
+    const id = getRouterParam(event, 'id');
+    return { message: `Update ticket by ID ${id} - to be implemented` };
 });

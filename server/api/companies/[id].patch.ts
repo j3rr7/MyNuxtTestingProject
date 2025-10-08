@@ -8,10 +8,12 @@ const requestSchema = z.object({
     .min(1, "Database must not be empty if provided")
     .optional(),
   expiresAt: z.coerce.date().optional(),
+  isActive: z.boolean().optional()
 });
 
 export default defineEventHandler(async (event) => {
-  const id = event.context.params?.id;
+  const id = getRouterParam(event, 'id');
+
   if (!id) {
     throw createError({
       statusCode: 400,
@@ -22,6 +24,7 @@ export default defineEventHandler(async (event) => {
   const parseResult = await readValidatedBody(event, (body) =>
     requestSchema.safeParse(body)
   );
+
   if (!parseResult.success) {
     throw createError({
       statusCode: 400,
@@ -29,8 +32,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const nitroApp = useNitroApp();
-  const { name, code, database, expiresAt } = parseResult.data;
+  const { name, code, database, expiresAt, isActive } = parseResult.data;
 
   const updates = [];
   const params = [];
@@ -60,6 +62,11 @@ export default defineEventHandler(async (event) => {
     });
   }
 
+  if (isActive !== undefined) {
+    updates.push(`is_active = $${paramIndex++}`);
+    params.push(isActive);
+  }
+
   params.push(id);
 
   const sqlQuery = `UPDATE public.companies SET ${updates.join(
@@ -67,26 +74,34 @@ export default defineEventHandler(async (event) => {
   )} WHERE company_id = $${paramIndex};`;
 
   try {
-    if (!nitroApp.sql) {
-      console.error("Database connection (nitroApp.sql) is not available.");
+    const sql = useDatabase(event);
+
+    if (!sql) {
       throw createError({
         statusCode: 500,
         statusMessage: "Database connection is not available.",
       });
     }
 
-    await nitroApp.sql.unsafe(sqlQuery, params);
+    await sql.unsafe(sqlQuery, params);
 
     setResponseStatus(event, 200);
 
     return {
       message: "Company updated successfully.",
     };
-  } catch (error: unknown) {
-    console.error("Database operation failed:", error);
+  } catch (error) {
+
+    if (error instanceof Error) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: "Service temporarily unavailable",
+      });
+    }
+
     throw createError({
       statusCode: 500,
-      statusMessage: "Database operation failed: " + error,
-    });
+      statusMessage: "Service temporarily unavailable",
+    })
   }
 });
