@@ -30,7 +30,14 @@ const onSubmit = (_: FormSubmitEvent<typeof state>) => {
 <template>
   <UCard>
     <template #header>
-      <h2 class="text-lg font-semibold">Extend Subscription for {{ props.company?.company_name }}</h2>
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Extend Subscription for {{ props.company?.company_name }}</h2>
+        <UButton
+          icon="i-heroicons-x-mark-20-solid"
+          variant="ghost"
+          @click="emit('cancel')"
+        />
+      </div>
     </template>
 
     <UForm :state="state" class="space-y-6" @submit.prevent="onSubmit">

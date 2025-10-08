@@ -5,6 +5,8 @@ import useCompanies from "~/composable/useCompanies";
 const { companies, searchQuery, fetchCompanies } = useCompanies();
 
 const isCreateDialogOpen = ref(false);
+const isExtendDialogOpen = ref(false);
+const isDisableDialogOpen = ref(false);
 
 onMounted(() => {
   fetchCompanies();
@@ -37,30 +39,44 @@ onMounted(() => {
               console.log('created');
             }
           "
-          @cancel="isCreateDialogOpen = false"
+          @cancel="
+            () => {
+              isCreateDialogOpen = false;
+            }
+          "
         />
       </template>
     </UModal>
 
-    <DialogCompanyExtend
-      :company="companies[0]!"
-      @extended="
-        () => {
-          console.log('extended');
-        }
-      "
-      @cancel="
-        () => {
-          console.log('cancel');
-        }
-      "
-    />
+    <UModal v-model:open="isExtendDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
+      <template #content>
+        <DialogCompanyExtend
+          :company="companies[0]!"
+          @extended="
+            () => {
+              console.log('extended');
+            }
+          "
+          @cancel="
+            () => {
+              isExtendDialogOpen = false;
+            }
+          "
+        />
+      </template>
+    </UModal>
+
+    <UModal v-model:open="isDisableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
+      <template #content>
+
+      </template>
+    </UModal>
 
     <TableCompany
       :companies="companies"
       @extend="
         () => {
-          console.log('extend');
+          isExtendDialogOpen = true;
         }
       "
       @disable="
