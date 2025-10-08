@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import type { FormError, FormSubmitEvent } from "@nuxt/ui";
+import type { FormSubmitEvent } from "@nuxt/ui";
 import { CalendarDate } from "@internationalized/date";
-import { z } from "zod";
 
 const now = new Date();
 
@@ -15,34 +14,6 @@ const state = reactive({
     now.getDate()
   ),
 });
-
-const companySchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  companyCode: z
-    .string()
-    .min(1, "Company code is required")
-    .max(20, "Company code max length is 20"),
-  databaseName: z.string().min(1, "Database name is required"),
-  expiresAt: z.instanceof(CalendarDate),
-});
-
-const validate = (): FormError[] => {
-  const errors: FormError[] = [];
-  const dataToValidate = {
-    companyName: state.companyName,
-    companyCode: state.companyCode,
-    databaseName: state.databaseName,
-    expiresAt: state.expiresAt,
-  };
-
-  const result = companySchema.safeParse(dataToValidate);
-
-  if (!result.success) {
-    console.error(result.error);
-  }
-
-  return errors;
-};
 
 const emit = defineEmits(["created", "cancel"]);
 
@@ -81,10 +52,9 @@ const onSubmit = (_: FormSubmitEvent<typeof state>) => {
     </template>
 
     <UForm
-      :validate="validate"
       :state="state"
       class="space-y-6"
-      @submit="onSubmit"
+      @submit.prevent="onSubmit"
     >
       <UFormField label="Company Name" name="companyName" required>
         <UInput

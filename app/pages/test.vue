@@ -16,6 +16,12 @@ onMounted(() => {
       @cancel="() => {console.log('cancel')}"
     />
 
+    <DialogCompanyExtend 
+      :company="companies[0]!"
+      @extended="() => {console.log('extended')}"
+      @cancel="() => {console.log('cancel')}"
+    />
+
     <TableCompany 
       :companies="companies" 
       @extend="() => {console.log('extend')}" 
