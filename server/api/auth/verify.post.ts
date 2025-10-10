@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { $totp } from "../utils/oauth";
+import { $totp } from "../../utils/oauth";
 
 const requestSchema = z.object({
   token: z.string().min(1),
@@ -35,6 +35,5 @@ export default defineEventHandler(async (event) => {
   return {
     result: isValid,
     delta,
-    token: isValid ? "admintoken" : undefined
   };
 });

@@ -1,11 +1,15 @@
-export default defineNuxtRouteMiddleware((to, _from) => {
-  const { loggedIn } = useUserSession()
+export default defineNuxtRouteMiddleware( async (to, _from) => {
+  const { loggedIn, fetch: refreshSession } = useUserSession()
   
-  const publicRoutes = ['/login', '/error', '/qr']
-  
-  // Check if route has auth: false in page meta
+  await refreshSession()
+
+  const publicRoutes = ['/login', '/error']
   const isPublicRoute = publicRoutes.includes(to.path) || to.meta.auth === false
   
+  if (loggedIn.value && to.path === '/login') {
+    return navigateTo('/')
+  }
+
   if (!isPublicRoute && !loggedIn.value) {
     return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
   }

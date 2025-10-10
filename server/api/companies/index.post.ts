@@ -37,6 +37,29 @@ export default defineEventHandler(async (event) => {
       [name, code, database, expiresAt.toISOString()]
     );
 
+    await insertAuditLog({
+      actor: event.context.user?.name || "UNKNOWN",
+      action: "COMPANY.CREATE",
+      target: "DATABASE",
+      status: "SUCCESS",
+      description: `Created company ${name}`,
+      metadata: { name, code, database, expiresAt },
+    }, event);
+
+    await sql.unsafe(
+      `SELECT * FROM public.populate_company_schema($1);`,
+      [database]
+    )
+
+    await insertAuditLog({
+      actor: event.context.user?.name || "UNKNOWN",
+      action: "COMPANY.POPULATE",
+      target: "DATABASE",
+      status: "SUCCESS",
+      description: `Populated company ${name}`,
+      metadata: { database },
+    }, event);
+
     setResponseStatus(event, 201);
 
     return {

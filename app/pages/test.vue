@@ -7,6 +7,8 @@ const { companies, searchQuery, fetchCompanies } = useCompanies();
 const isCreateDialogOpen = ref(false);
 const isExtendDialogOpen = ref(false);
 const isDisableDialogOpen = ref(false);
+const isEnableDialogOpen = ref(false);
+const isDeleteDialogOpen = ref(false);
 
 onMounted(() => {
   fetchCompanies();
@@ -68,7 +70,55 @@ onMounted(() => {
 
     <UModal v-model:open="isDisableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
+        <DialogCompanyDisable
+          :company="companies[0]!"
+          @disabled="
+            () => {
+              console.log('disabled');
+            }
+          "
+          @cancel="
+            () => {
+              isDisableDialogOpen = false;
+            }
+          "
+        />
+      </template>
+    </UModal>
 
+    <UModal v-model:open="isEnableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
+      <template #content>
+        <DialogCompanyEnable
+          :company="companies[0]!"
+          @enabled="
+            () => {
+              console.log('enabled');
+            }
+          "
+          @cancel="
+            () => {
+              isEnableDialogOpen = false;
+            }
+          "
+        />
+      </template>
+    </UModal>
+
+    <UModal v-model:open="isDeleteDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
+      <template #content>
+        <DialogCompanyDelete
+          :company="companies[0]!"
+          @deleted="
+            () => {
+              console.log('deleted');
+            }
+          "
+          @cancel="
+            () => {
+              isDeleteDialogOpen = false;
+            }
+          "
+        />
       </template>
     </UModal>
 
@@ -81,17 +131,17 @@ onMounted(() => {
       "
       @disable="
         () => {
-          console.log('disable');
+          isDisableDialogOpen = true;
         }
       "
       @enable="
         () => {
-          console.log('enable');
+          isEnableDialogOpen = true;
         }
       "
       @delete="
         () => {
-          console.log('delete');
+          isDeleteDialogOpen = true;
         }
       "
     />

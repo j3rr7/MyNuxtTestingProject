@@ -1,16 +1,22 @@
 export default defineEventHandler(async (event) => {
   const url = getRequestURL(event);
 
-  if (url.pathname.startsWith("/api/")) {
-    // Only on api routes
-    
+  // disable on health
+  if (url.pathname === "/api/health") {
+    return;
   }
-  
-  // const session = await requireUserSession(event)
-  // if (!session) {
-  //   throw createError({
-  //     statusCode: 401,
-  //     statusMessage: 'Unauthorized',
-  //   })
-  // }
-})
+
+  // disable on auth routes
+  if (url.pathname.startsWith("/api/auth/")) {
+    return;
+  }
+
+  if (url.pathname.startsWith("/api/")) {
+    const session = await requireUserSession(event, {
+      statusCode: 401,
+      message: "Unauthorized",
+    });
+
+    event.context.user = session.user;
+  }
+});

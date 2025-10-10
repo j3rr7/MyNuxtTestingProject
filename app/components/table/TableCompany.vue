@@ -6,6 +6,7 @@ defineEmits([
   "disable",
   "enable",
   "delete",
+  "addUser",
 ]);
 
 const columns = [
@@ -32,18 +33,26 @@ const columns = [
 
     <template #actions-cell="{ row }">
       <div class="flex items-center gap-2">
-        <UButton size="xs" color="primary" variant="soft" @click="$emit('extend', row.original)">
-          Extend Subscription
+        <UButton
+          icon="i-heroicons-user-plus"
+          size="xs"
+          color="violet"
+          variant="soft"
+          @click="$emit('addUser', row.original)"
+        >
+          Add User
         </UButton>
-        <UButton v-if="row.original.is_active" size="xs" color="warning" variant="soft" @click="$emit('disable', row.original)">
+
+        <UButton icon="i-heroicons-clock" size="xs" color="primary" variant="soft" @click="$emit('extend', row.original)">
+          Extend
+        </UButton>
+        <UButton v-if="row.original.is_active" icon="i-heroicons-x-circle" size="xs" color="warning" variant="soft" @click="$emit('disable', row.original)">
           Disable
         </UButton>
-        <UButton v-else size="xs" color="success" variant="soft" @click="$emit('enable', row.original)">
+        <UButton v-else icon="i-heroicons-check-circle" size="xs" color="success" variant="soft" @click="$emit('enable', row.original)">
           Enable
         </UButton>
-        <UButton size="xs" color="error" variant="soft" @click="$emit('delete', row.original)">
-          Delete
-        </UButton>
+        <UButton icon="i-heroicons-trash" size="xs" color="error" variant="soft" @click="$emit('delete', row.original)" />
       </div>
     </template>
   </UTable>

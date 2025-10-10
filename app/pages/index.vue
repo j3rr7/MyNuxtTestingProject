@@ -181,7 +181,7 @@ const quickActions = [
         </UButton>
       </div>
 
-      <UCard class="rounded-xl"> ... </UCard>
+      <CardRecentActions />
     </div>
   </div>
 </template>

@@ -8,10 +8,27 @@ export default defineAppConfig({
       info: 'sky',
       warning: 'amber',
       error: 'rose',
-      green: 'teal',
-      red: 'crimson',
-      yellow: 'gold',
-      neutral: 'zinc'
+      neutral: 'zinc',
+      green: 'green',
+      red: 'red',
+      yellow: 'yellow',
+      blue: 'blue',
+      indigo: 'indigo',
+      purple: 'purple',
+      pink: 'pink',
+      rose: 'rose',
+      slate: 'slate',
+      gray: 'gray',
+      zinc: 'zinc',
+      stone: 'stone',
+      amber: 'amber',
+      orange: 'orange',
+      emerald: 'emerald',
+      teal: 'teal',
+      cyan: 'cyan',
+      sky: 'sky',
+      violet: 'violet',
+      fuchsia: 'fuchsia'
     }
   }
 })

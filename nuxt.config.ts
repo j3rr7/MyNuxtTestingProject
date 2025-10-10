@@ -30,16 +30,10 @@ export default defineNuxtConfig({
   ui: {
     theme: {
       colors: [
-        'primary', 
-        'secondary', 
-        'success', 
-        'info', 
-        'warning', 
-        'error',
-        'green', 
-        'red', 
-        'yellow',
-        'neutral'
+        'primary', 'secondary', 'success', 'info', 'warning', 'error', 'neutral',
+        'green', 'red', 'yellow', 'blue', 'indigo', 'purple', 'pink', 'rose',
+        'slate', 'gray', 'zinc', 'neutral', 'stone', 'amber', 'orange', 'emerald',
+        'teal', 'cyan', 'sky', 'violet', 'fuchsia', 'rose',
       ],
     }
   },
@@ -54,7 +48,7 @@ export default defineNuxtConfig({
     /**
      * Key here available server side 
      */
-    databaseUrl: "postgresql://postgres:postgres@server.lan:5432/testdb",
+    databaseUrl: "postgresql://postgres:postgres@localhost:5432/testdb",
     databaseDevUrl: "postgresql://postgres:postgres@server.lan:5432/testdb",
     secretKey: "AKBHMONFCHJJKXA4SKVYMIPLHWWIDLTO",
     session: {

@@ -8,11 +8,11 @@ const requestSchema = z.object({
     .min(1, "Database must not be empty if provided")
     .optional(),
   expiresAt: z.coerce.date().optional(),
-  isActive: z.boolean().optional()
+  isActive: z.boolean().optional(),
 });
 
 export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, 'id');
+  const id = getRouterParam(event, "id");
 
   if (!id) {
     throw createError({
@@ -55,16 +55,16 @@ export default defineEventHandler(async (event) => {
     params.push(expiresAt.toISOString());
   }
 
+  if (isActive !== undefined) {
+    updates.push(`is_active = $${paramIndex++}`);
+    params.push(isActive);
+  }
+
   if (updates.length === 0) {
     throw createError({
       statusCode: 400,
       statusMessage: "Request body must contain at least one field to update.",
     });
-  }
-
-  if (isActive !== undefined) {
-    updates.push(`is_active = $${paramIndex++}`);
-    params.push(isActive);
   }
 
   params.push(id);
@@ -85,12 +85,22 @@ export default defineEventHandler(async (event) => {
 
     await sql.unsafe(sqlQuery, params);
 
+    await insertAuditLog({
+      actor: event.context.user?.name || "UNKNOWN",
+      action: "COMPANY.UPDATE",
+      target: "DATABASE",
+      status: "SUCCESS",
+      description: `Updated company ${name}`,
+      metadata: { id, name, code, database, expiresAt, isActive },
+    }, event);
+
     setResponseStatus(event, 200);
 
     return {
       message: "Company updated successfully.",
     };
   } catch (error) {
+    console.error(error);
 
     if (error instanceof Error) {
       throw createError({
@@ -102,6 +112,6 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 500,
       statusMessage: "Service temporarily unavailable",
-    })
+    });
   }
 });

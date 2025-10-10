@@ -1,40 +1,28 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui";
-import { CalendarDate } from "@internationalized/date";
+import { today, getLocalTimeZone, type CalendarDate } from '@internationalized/date'
 
-const now = new Date();
-
-const state = reactive({
-  companyName: "",
-  companyCode: "",
-  databaseName: "",
-  expiresAt: new CalendarDate(
-    now.getFullYear() + 1,
-    now.getMonth() + 1,
-    now.getDate()
-  ),
-});
+const companyName = ref('')
+const companyCode = ref('')
+const databaseName = ref('')
+const expiresAt = shallowRef<CalendarDate>(today(getLocalTimeZone()))
 
 const emit = defineEmits(["created", "cancel"]);
 
-const onSubmit = (_: FormSubmitEvent<typeof state>) => {
+const onSubmit = (_: FormSubmitEvent<HTMLFormElement>) => {
   const payload = {
-    name: state.companyName,
-    code: state.companyCode,
-    database: state.databaseName,
-    expiresAt: state.expiresAt.toDate("UTC").toISOString(),
+    name: companyName.value,
+    code: companyCode.value,
+    database: databaseName.value,
+    expiresAt: expiresAt.value.toDate("UTC").toISOString(),
   };
   emit("created", payload);
 
   // Clear form
-  state.companyName = "";
-  state.companyCode = "";
-  state.databaseName = "";
-  state.expiresAt = new CalendarDate(
-    now.getFullYear() + 1,
-    now.getMonth() + 1,
-    now.getDate()
-  );
+  companyName.value = ''
+  companyCode.value = ''
+  databaseName.value = ''
+  expiresAt.value = today(getLocalTimeZone())
 };
 </script>
 
@@ -52,13 +40,13 @@ const onSubmit = (_: FormSubmitEvent<typeof state>) => {
     </template>
 
     <UForm
-      :state="state"
+      :state="{}"
       class="space-y-6"
       @submit.prevent="onSubmit"
     >
       <UFormField label="Company Name" name="companyName" required>
         <UInput
-          v-model="state.companyName"
+          v-model="companyName"
           placeholder="e.g., Acme Corporation"
           size="lg"
         />
@@ -71,7 +59,7 @@ const onSubmit = (_: FormSubmitEvent<typeof state>) => {
         required
       >
         <UInput
-          v-model="state.companyCode"
+          v-model="companyCode"
           placeholder="ACME001"
           size="lg"
           maxlength="20"
@@ -84,11 +72,11 @@ const onSubmit = (_: FormSubmitEvent<typeof state>) => {
         help="Database identifier for this company"
         required
       >
-        <UInput v-model="state.databaseName" placeholder="acme_db" size="lg" />
+        <UInput v-model="databaseName" placeholder="acme_db" size="lg" />
       </UFormField>
 
       <UFormField label="Subscription Expires" name="expiresAt" required>
-        <DatePicker v-model="state.expiresAt" />
+        <DatePicker v-model="expiresAt" />
       </UFormField>
 
       <div class="flex justify-end gap-3">
