@@ -6,6 +6,7 @@ const requestSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
   role: z.number().int().positive("Role is required"),
+  companyId: z.string().optional(),
 });
 
 export default defineEventHandler(async (event) => {
