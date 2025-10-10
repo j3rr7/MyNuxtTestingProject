@@ -90,7 +90,7 @@ export default defineEventHandler(async (event) => {
       action: "COMPANY.UPDATE",
       target: "DATABASE",
       status: "SUCCESS",
-      description: `Updated company ${name}`,
+      description: `Updated company ${id}`,
       metadata: { id, name, code, database, expiresAt, isActive },
     }, event);
 

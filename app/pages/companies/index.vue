@@ -117,6 +117,22 @@ const api = {
       isDeleteDialogOpen.value = false;
     }
   },
+
+  addUser: async (_user: { displayName: string; username: string; email: string; password: string; role: number, companyId: string }) => {
+    try {
+      const response = await $fetch(`/api/companies/${_user.companyId}/users`, {
+        method: "POST",
+        body: _user,
+      });
+
+      console.log(response);
+
+    } catch (error) {
+      console.error(error);
+    } finally {
+      isAddUserDialogOpen.value = false;
+    }
+  }
 };
 
 watch(searchQuery, () => {
@@ -131,140 +147,98 @@ onMounted(() => {
 <template>
   <div class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <UInput
-        v-model="searchQuery"
-        icon="i-lucide-search"
-        variant="outline"
-        type="text"
-        placeholder="Search by company name or code..."
-        :ui="{
+      <UInput v-model="searchQuery" icon="i-lucide-search" variant="outline" type="text"
+        placeholder="Search by company name or code..." :ui="{
           base: 'min-w-[200px] sm:min-w-[300px] md:min-w-[400px] lg:min-w-[500px] w-full',
-        }"
-      />
-      <UButton icon="i-heroicons-plus-circle" @click="isCreateDialogOpen = true"
-        >Create Company</UButton
-      >
+        }" />
+      <UButton icon="i-heroicons-plus-circle" @click="isCreateDialogOpen = true">Create Company</UButton>
     </div>
 
     <UModal v-model:open="isCreateDialogOpen" :ui="{ wrapper: 'sm:max-w-xl' }">
       <template #content>
-        <DialogCompanyCreate
-          @created="api.createCompany"
-          @cancel="
-            () => {
-              isCreateDialogOpen = false;
-            }
-          "
-        />
+        <DialogCompanyCreate @created="api.createCompany" @cancel="
+          () => {
+            isCreateDialogOpen = false;
+          }
+        " />
       </template>
     </UModal>
 
     <UModal v-model:open="isExtendDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyExtend
-          :company="selectedCompany"
-          @extended="api.extendExpiration"
-          @cancel="
-            () => {
-              isExtendDialogOpen = false;
-            }
-          "
-        />
+        <DialogCompanyExtend :company="selectedCompany" @extended="api.extendExpiration" @cancel="
+          () => {
+            isExtendDialogOpen = false;
+          }
+        " />
       </template>
     </UModal>
 
     <UModal v-model:open="isDisableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyDisable
-          :company="selectedCompany"
-          @disabled="api.disableCompany"
-          @cancel="
-            () => {
-              isDisableDialogOpen = false;
-            }
-          "
-        />
+        <DialogCompanyDisable :company="selectedCompany" @disabled="api.disableCompany" @cancel="
+          () => {
+            isDisableDialogOpen = false;
+          }
+        " />
       </template>
     </UModal>
 
     <UModal v-model:open="isEnableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyEnable
-          :company="selectedCompany"
-          @enabled="api.enableCompany"
-          @cancel="
-            () => {
-              isEnableDialogOpen = false;
-            }
-          "
-        />
+        <DialogCompanyEnable :company="selectedCompany" @enabled="api.enableCompany" @cancel="
+          () => {
+            isEnableDialogOpen = false;
+          }
+        " />
       </template>
     </UModal>
 
     <UModal v-model:open="isDeleteDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyDelete
-          :company="selectedCompany"
-          @deleted="api.deleteCompany"
-          @cancel="
-            () => {
-              isDeleteDialogOpen = false;
-            }
-          "
-        />
+        <DialogCompanyDelete :company="selectedCompany" @deleted="api.deleteCompany" @cancel="
+          () => {
+            isDeleteDialogOpen = false;
+          }
+        " />
       </template>
     </UModal>
 
     <UModal v-model:open="isAddUserDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyAddUser
-          :company="selectedCompany"
-          @added="
-            () => {
-              console.log('added');
-            }
-          "
-          @cancel="
-            () => {
-              isAddUserDialogOpen = false;
-            }
-          "
-        />
+        <DialogCompanyAddUser :company="selectedCompany" @added="api.addUser" @cancel="
+          () => {
+            isAddUserDialogOpen = false;
+          }
+        " />
       </template>
     </UModal>
 
-    <TableCompany
-      :companies="companies"
-      @extend="
-        (_selectedCompany) => {
-          selectedCompany = _selectedCompany;
-          isExtendDialogOpen = true;
-        }
-      "
-      @disable="
+    <TableCompany :companies="companies" @extend="
+      (_selectedCompany) => {
+        selectedCompany = _selectedCompany;
+        isExtendDialogOpen = true;
+      }
+    " @disable="
         (_selectedCompany) => {
           selectedCompany = _selectedCompany;
           isDisableDialogOpen = true;
         }
-      "
-      @enable="
+      " @enable="
         (_selectedCompany) => {
           selectedCompany = _selectedCompany;
           isEnableDialogOpen = true;
         }
-      "
-      @delete="
+      " @delete="
         (_selectedCompany) => {
           selectedCompany = _selectedCompany;
           isDeleteDialogOpen = true;
         }
-      "
-      @add-user="
+      " @add-user="
         (_selectedCompany) => {
           selectedCompany = _selectedCompany;
           isAddUserDialogOpen = true;
         }
-      "
-    />
+      " />
   </div>
 </template>
