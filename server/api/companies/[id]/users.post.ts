@@ -3,7 +3,7 @@ import { z } from "zod";
 const requestSchema = z.object({
   displayName: z.string().min(1, "Display name is required"),
   username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email format"),
+  email: z.email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters long"),
   role: z.number().int().positive("Role is required"),
   companyId: z.string().optional(),

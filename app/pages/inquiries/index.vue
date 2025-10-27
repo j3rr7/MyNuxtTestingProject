@@ -232,9 +232,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="space-y-4 animate__animated animate__fadeIn">
-    <header
-      class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-    >
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
           Inquiries
@@ -246,22 +244,13 @@ onBeforeUnmount(() => {
 
       <div class="flex items-center gap-3">
         <UTooltip text="Real-time updates connection status">
-          <UBadge
-            variant="subtle"
-            size="sm"
-            :color="getWsColor(status)"
-            class="flex items-center gap-2"
-            aria-live="polite"
-          >
-            <span
-              class="inline-block w-2 h-2 rounded-full"
-              :class="{
-                'bg-green-500': status === 'OPEN',
-                'bg-yellow-400 animate-pulse': status === 'CONNECTING',
-                'bg-red-500': status === 'CLOSED',
-              }"
-              aria-hidden="true"
-            />
+          <UBadge variant="subtle" size="sm" :color="getWsColor(status)" class="flex items-center gap-2"
+            aria-live="polite">
+            <span class="inline-block w-2 h-2 rounded-full" :class="{
+              'bg-green-500': status === 'OPEN',
+              'bg-yellow-400 animate-pulse': status === 'CONNECTING',
+              'bg-red-500': status === 'CLOSED',
+            }" aria-hidden="true" />
             <span class="font-medium">
               {{ getWsLabel(status) }}
             </span>
@@ -270,35 +259,20 @@ onBeforeUnmount(() => {
       </div>
     </header>
 
-    <div
-      v-if="pending && !data"
-      class="py-12 flex flex-col items-center text-center"
-    >
-      <UIcon
-        name="i-lucide-loader-2"
-        class="animate-spin text-primary-500 text-4xl"
-      />
+    <div v-if="pending && !data" class="py-12 flex flex-col items-center text-center">
+      <UIcon name="i-lucide-loader-2" class="animate-spin text-primary-500 text-4xl" />
       <p class="text-lg mt-4 text-gray-600 dark:text-gray-300">
         Loading inquiries...
       </p>
     </div>
 
-    <div
-      v-else-if="error"
-      class="py-8 px-4 bg-red-50 dark:bg-red-900/20 rounded-lg"
-    >
+    <div v-else-if="error" class="py-8 px-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
       <div class="flex items-center gap-3 text-red-600 dark:text-red-400">
         <UIcon name="i-lucide-alert-triangle" class="text-2xl" />
         <div>
           <p class="font-bold">Error Loading Inquiries</p>
           <p class="text-sm mt-1">{{ error.message }}</p>
-          <UButton
-            size="sm"
-            color="red"
-            variant="soft"
-            class="mt-3"
-            @click="refresh()"
-          >
+          <UButton size="sm" color="red" variant="soft" class="mt-3" @click="refresh()">
             <UIcon name="i-lucide-refresh-cw" class="mr-1" />
             Try Again
           </UButton>
@@ -307,10 +281,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else-if="inquiries.length === 0" class="py-12 text-center">
-      <UIcon
-        name="i-lucide-inbox"
-        class="text-5xl mx-auto mb-4 text-gray-400 dark:text-gray-500"
-      />
+      <UIcon name="i-lucide-inbox" class="text-5xl mx-auto mb-4 text-gray-400 dark:text-gray-500" />
       <h3 class="text-xl font-medium text-gray-900 dark:text-white">
         No Inquiries Found
       </h3>
@@ -321,14 +292,7 @@ onBeforeUnmount(() => {
             : "There are no inquiries to display yet."
         }}
       </p>
-      <UButton
-        v-if="filters.q"
-        size="sm"
-        color="primary"
-        variant="soft"
-        class="mt-4"
-        @click="filters.q = ''"
-      >
+      <UButton v-if="filters.q" size="sm" color="primary" variant="soft" class="mt-4" @click="filters.q = ''">
         Clear Search
       </UButton>
     </div>
@@ -336,80 +300,36 @@ onBeforeUnmount(() => {
     <div v-else class="space-y-4">
       <div class="flex flex-col md:flex-row items-center justify-between gap-3">
         <div class="flex-1 w-full md:w-auto">
-          <UInput
-            v-model="filters.q"
-            placeholder="Search by name, email, or question..."
-            icon="i-lucide-search"
-            class="w-full md:w-96"
-          >
+          <UInput v-model="filters.q" placeholder="Search by name, email, or question..." icon="i-lucide-search"
+            class="w-full md:w-96">
             <template v-if="filters.q?.length" #trailing>
-              <UButton
-                color="neutral"
-                variant="link"
-                size="sm"
-                icon="i-lucide-circle-x"
-                aria-label="Clear input"
-                @click="filters.q = ''"
-              />
+              <UButton color="neutral" variant="link" size="sm" icon="i-lucide-circle-x" aria-label="Clear input"
+                @click="filters.q = ''" />
             </template>
           </UInput>
         </div>
 
         <div class="flex items-center gap-2">
-          <USelect
-            v-model="sort.sortBy"
-            :items="[
-              { label: 'Sort: Newest', value: 'submitted_at' },
-              { label: 'Sort: ID', value: 'id' },
-              { label: 'Sort: Name', value: 'display_name' },
-            ]"
-            class="w-36"
-          />
-          <UButton
-            color="gray"
-            variant="ghost"
-            :icon="
-              sort.order === 'ASC' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'
-            "
-            @click="sort.order = sort.order === 'ASC' ? 'DESC' : 'ASC'"
-          />
-          <UButton
-            icon="i-lucide-refresh-cw"
-            color="gray"
-            variant="ghost"
-            :loading="pending"
-            @click="refresh()"
-          />
-          <UButton
-            :icon="loadingExport ? 'i-lucide-loader' : 'i-lucide-download'"
-            color="gray"
-            variant="ghost"
-            :loading="loadingExport"
-            :disabled="loadingExport"
-            @click="exportData"
-          />
+          <USelect v-model="sort.sortBy" :items="[
+            { label: 'Sort: Newest', value: 'submitted_at' },
+            { label: 'Sort: ID', value: 'id' },
+            { label: 'Sort: Name', value: 'display_name' },
+          ]" class="w-36" />
+          <UButton color="gray" variant="ghost" :icon="sort.order === 'ASC' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'
+            " @click="sort.order = sort.order === 'ASC' ? 'DESC' : 'ASC'" />
+          <UButton icon="i-lucide-refresh-cw" color="gray" variant="ghost" :loading="pending" @click="refresh()" />
+          <UButton :icon="loadingExport ? 'i-lucide-loader' : 'i-lucide-download'" color="gray" variant="ghost"
+            :loading="loadingExport" :disabled="loadingExport" @click="exportData" />
         </div>
       </div>
 
       <div class="rounded-lg overflow-hidden -mx-6 sm:-mx-8 md:-mx-12 lg:mx-0">
         <div class="overflow-x-auto">
-          <UTable
-            ref="table"
-            v-model:expanded="expanded"
-            v-model:pagination="tablePagination"
-            :columns="columns"
-            :data="inquiries"
-            :loading="pending"
-            loading-color="primary"
-            loading-animation="carousel"
-          >
+          <UTable ref="table" v-model:expanded="expanded" v-model:pagination="tablePagination" :columns="columns"
+            :data="inquiries" :loading="pending" loading-color="primary" loading-animation="carousel">
             <template #expanded="{ row }">
-              <div
-                class="p-4 bg-gray-100 dark:bg-gray-800 animate__animated animate__fadeIn"
-              >
-                <dl
-                  class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm"
-                >
+              <div class="p-4 bg-gray-100 dark:bg-gray-800 animate__animated animate__fadeIn">
+                <dl class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
                   <div>
                     <dt class="font-semibold text-gray-900 dark:text-white">
                       Full Name
@@ -431,7 +351,16 @@ onBeforeUnmount(() => {
                       Submitted
                     </dt>
                     <dd class="mt-1 text-gray-600 dark:text-gray-300">
-                      {{ new Date(row.original.submitted_at).toLocaleString() }}
+                      {{ 
+                      new Date(row.original.submitted_at).toLocaleDateString("en-GB", {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      })
+                      }}
                     </dd>
                   </div>
                   <div>
@@ -454,9 +383,7 @@ onBeforeUnmount(() => {
                     <dt class="font-semibold text-gray-900 dark:text-white">
                       Full Question
                     </dt>
-                    <dd
-                      class="mt-1 text-gray-600 dark:text-gray-300 whitespace-pre-wrap"
-                    >
+                    <dd class="mt-1 text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
                       {{ row.original.question }}
                     </dd>
                   </div>
@@ -471,15 +398,10 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 dark:border-gray-800"
-        >
+          class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-200 dark:border-gray-800">
           <div class="flex items-center gap-2 text-sm">
             <span>Rows per page</span>
-            <USelect
-              v-model="tablePagination.pageSize"
-              :items="[10, 25, 50, 100]"
-              size="xs"
-            />
+            <USelect v-model="tablePagination.pageSize" :items="[10, 25, 50, 100]" size="xs" />
           </div>
 
           <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -488,12 +410,8 @@ onBeforeUnmount(() => {
             {{ meta.total }} inquiries
           </p>
 
-          <UPagination
-            v-model:page="currentPage"
-            show-edge-buttons
-            :items-per-page="tablePagination.pageSize"
-            :total="meta.total"
-          />
+          <UPagination v-model:page="currentPage" show-edge-buttons :items-per-page="tablePagination.pageSize"
+            :total="meta.total" />
         </div>
       </div>
     </div>

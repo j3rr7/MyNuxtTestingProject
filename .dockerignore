@@ -1,0 +1,33 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# Nuxt.js build files
+.nuxt
+dist
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git files
+.git
+.gitignore
+
+# Logs
+logs
+*.log
+
+# Other files you might want to exclude
+.idea
+.vscode
+coverage

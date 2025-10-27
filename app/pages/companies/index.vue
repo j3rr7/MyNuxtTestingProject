@@ -2,6 +2,11 @@
 import TableCompany from "~/components/table/TableCompany.vue";
 import useCompanies from "~/composable/useCompanies";
 
+definePageMeta({
+  middleware: ["feature-flag"],
+  featureFlagEnabled: false,
+})
+
 const { companies, searchQuery, fetchCompanies, debouncedFetch } =
   useCompanies();
 
@@ -147,7 +152,8 @@ onMounted(() => {
 <template>
   <div class="max-w-7xl mx-auto">
     <div class="flex justify-between items-center mb-6">
-      <UInput v-model="searchQuery" icon="i-lucide-search" variant="outline" type="text"
+      <UInput 
+        v-model="searchQuery" icon="i-lucide-search" variant="outline" type="text"
         placeholder="Search by company name or code..." :ui="{
           base: 'min-w-[200px] sm:min-w-[300px] md:min-w-[400px] lg:min-w-[500px] w-full',
         }" />
@@ -156,7 +162,8 @@ onMounted(() => {
 
     <UModal v-model:open="isCreateDialogOpen" :ui="{ wrapper: 'sm:max-w-xl' }">
       <template #content>
-        <DialogCompanyCreate @created="api.createCompany" @cancel="
+        <DialogCompanyCreate 
+        @created="api.createCompany" @cancel="
           () => {
             isCreateDialogOpen = false;
           }
@@ -166,7 +173,9 @@ onMounted(() => {
 
     <UModal v-model:open="isExtendDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyExtend :company="selectedCompany" @extended="api.extendExpiration" @cancel="
+        <DialogCompanyExtend 
+          :company="selectedCompany" 
+        @extended="api.extendExpiration" @cancel="
           () => {
             isExtendDialogOpen = false;
           }
@@ -176,7 +185,9 @@ onMounted(() => {
 
     <UModal v-model:open="isDisableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyDisable :company="selectedCompany" @disabled="api.disableCompany" @cancel="
+        <DialogCompanyDisable 
+          :company="selectedCompany" 
+        @disabled="api.disableCompany" @cancel="
           () => {
             isDisableDialogOpen = false;
           }
@@ -186,7 +197,9 @@ onMounted(() => {
 
     <UModal v-model:open="isEnableDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyEnable :company="selectedCompany" @enabled="api.enableCompany" @cancel="
+        <DialogCompanyEnable 
+          :company="selectedCompany" 
+        @enabled="api.enableCompany" @cancel="
           () => {
             isEnableDialogOpen = false;
           }
@@ -196,7 +209,9 @@ onMounted(() => {
 
     <UModal v-model:open="isDeleteDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyDelete :company="selectedCompany" @deleted="api.deleteCompany" @cancel="
+        <DialogCompanyDelete 
+          :company="selectedCompany" 
+        @deleted="api.deleteCompany" @cancel="
           () => {
             isDeleteDialogOpen = false;
           }
@@ -206,7 +221,9 @@ onMounted(() => {
 
     <UModal v-model:open="isAddUserDialogOpen" :ui="{ wrapper: 'sm:max-w-md' }">
       <template #content>
-        <DialogCompanyAddUser :company="selectedCompany" @added="api.addUser" @cancel="
+        <DialogCompanyAddUser 
+          :company="selectedCompany" 
+        @added="api.addUser" @cancel="
           () => {
             isAddUserDialogOpen = false;
           }
@@ -214,7 +231,9 @@ onMounted(() => {
       </template>
     </UModal>
 
-    <TableCompany :companies="companies" @extend="
+    <TableCompany 
+      :companies="companies" 
+    @extend="
       (_selectedCompany) => {
         selectedCompany = _selectedCompany;
         isExtendDialogOpen = true;

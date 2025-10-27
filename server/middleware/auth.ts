@@ -11,6 +11,11 @@ export default defineEventHandler(async (event) => {
     return;
   }
 
+  // disable on qr
+  if (url.pathname === "/api/qr") {
+    return;
+  }
+
   if (url.pathname.startsWith("/api/")) {
     const session = await requireUserSession(event, {
       statusCode: 401,

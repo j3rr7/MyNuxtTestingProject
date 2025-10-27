@@ -53,6 +53,7 @@ const columns = [
           Enable
         </UButton>
         <UButton icon="i-heroicons-trash" size="xs" color="error" variant="soft" @click="$emit('delete', row.original)" />
+        <UButton icon="i-heroicons-user-group" size="xs" color="neutral" variant="soft" :to="`/companies/${row.original.company_id}/users`" />
       </div>
     </template>
   </UTable>

@@ -24,7 +24,7 @@ export default function () {
 
       const response = await $fetch<PaginatedResponse<Company>>(
         `/api/companies?${params.toString()}`,
-        { method: "GET" }
+        { method: "GET" },
       );
 
       companies.value = response.data;
@@ -37,12 +37,21 @@ export default function () {
     }
   };
 
-  const debouncedFetch = useDebounceFn(() => {
-    currentPage.value = 1;
-    fetchCompanies();
-  }, 300, { maxWait: 5000 });
+  const getCompany = async (id: string) => {
+    const response = await $fetch<Company>(`/api/companies/${id}`, {
+      method: "GET",
+    });
+    return response;
+  }
 
-  // Watch searchQuery outside of composable, in component
+  const debouncedFetch = useDebounceFn(
+    () => {
+      currentPage.value = 1;
+      fetchCompanies();
+    },
+    300,
+    { maxWait: 5000 },
+  );
 
   const createCompany = async (payload: {
     name: string;
@@ -57,10 +66,7 @@ export default function () {
     await fetchCompanies();
   };
 
-  const extendSubscription = async (
-    companyId: string,
-    expiresAt: string
-  ) => {
+  const extendSubscription = async (companyId: string, expiresAt: string) => {
     await $fetch(`/api/companies/${companyId}`, {
       method: "PATCH",
       body: { expiresAt },
@@ -89,6 +95,21 @@ export default function () {
     await fetchCompanies();
   };
 
+  const getUsers = async (companyId: string) => {
+    const response = await $fetch(`/api/companies/${companyId}/users`, { method: "GET" });
+    return response.data as unknown as CompanyUser[];
+  };
+
+  const addUser = async (
+    companyId: string,
+    userData: { displayName: string; username: string; email: string; password: string; role: number },
+  ) => {
+    await $fetch(`/api/companies/${companyId}/users`, {
+      method: "POST",
+      body: { ...userData },
+    });
+  };
+
   return {
     companies,
     meta,
@@ -98,11 +119,15 @@ export default function () {
     currentPage,
     itemsPerPage,
     fetchCompanies,
+    getCompany,
     debouncedFetch,
     createCompany,
     extendSubscription,
     disableCompany,
     enableCompany,
     deleteCompany,
+
+    getUsers,
+    addUser,
   };
 }

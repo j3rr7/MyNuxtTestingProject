@@ -2,7 +2,7 @@
   <div class="flex flex-col min-h-screen">
     <AppHeader />
 
-    <main class="flex-grow p-4">
+    <main class="grow p-4">
       <UContainer>
         <slot />
       </UContainer>

@@ -7,7 +7,7 @@ definePageMeta({
   auth: false,
 });
 
-const { fetch: refreshSession, loggedIn } = useUserSession();
+const { fetch: refreshSession } = useUserSession();
 
 const currentStep = ref(1); // 1: Token Entry, 2: Name Entry, 3: Success
 const loading = ref(false);
@@ -119,6 +119,15 @@ async function handleNameSubmit(event: FormSubmitEvent<NameSchema>) {
   }
 }
 
+// auto submit token 
+watch(
+  () => state.token,
+  (new_token: string) => {
+    if (new_token.length === 6) {
+      tokenFormRef.value?.submit();
+    }
+  })
+
 function resetForm() {
   state.token = "";
   state.name = "";
@@ -127,14 +136,14 @@ function resetForm() {
 </script>
 
 <template>
-  <section class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-950 p-4">
+  <section class="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-900 to-slate-950 p-4">
     <UCard
       class="w-full max-w-sm bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 text-slate-100">
       <div class="text-center mb-8">
         <div class="mx-auto w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mb-4">
           <UIcon name="i-heroicons-qr-code" class="w-7 h-7 text-blue-300 animate-pulse" />
         </div>
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+        <h1 class="text-2xl font-bold bg-linear-to-r from-white to-slate-300 bg-clip-text text-transparent">
           Pair your Token
         </h1>
         <p 
@@ -148,7 +157,7 @@ function resetForm() {
         </p>
       </div>
 
-      <div class="min-h-[160px]">
+      <div class="min-h-40">
         <Transition 
           mode="out-in" enter-active-class="animate__animated animate__fadeInRight animate__faster"
           leave-active-class="animate__animated animate__fadeOutLeft animate__faster">
@@ -193,7 +202,7 @@ function resetForm() {
                 </UFormField>
               </div>
 
-              <div class="!mt-6">
+              <div class="mt-6!">
                 <UButton type="submit" size="lg" block :loading="loading" :disabled="!state.name || loading">
                   Submit
                 </UButton>

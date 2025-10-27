@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - NUXT_DATABASE_URL=postgresql://postgres:postgres@pc1.lan:5432/testdb
     ports:
       - "3000:3000"
     healthcheck:

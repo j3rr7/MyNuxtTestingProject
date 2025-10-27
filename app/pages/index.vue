@@ -66,6 +66,7 @@ const quickActions = [
     icon: "i-heroicons-building-library",
     to: "/companies",
     permission: "company:read",
+    enabled: true,
   },
   {
     title: "View Tickets",
@@ -73,6 +74,7 @@ const quickActions = [
     icon: "i-heroicons-plus-circle",
     to: "/tickets",
     permission: "ticket:read",
+    enabled: true,
   },
   {
     title: "View Inquiries",
@@ -80,13 +82,15 @@ const quickActions = [
     icon: "i-heroicons-envelope",
     to: "/inquiries",
     permission: "inquiry:read",
+    enabled: true,
   },
   {
-    title: "Manage Billing",
+    title: "Manage Contract",
     description: "View and manage company billing information",
     icon: "i-heroicons-credit-card",
     to: "/billing",
     permission: "billing:read;billing:write;billing:delete",
+    enabled: false,
   },
   {
     title: "Invoices",
@@ -94,6 +98,7 @@ const quickActions = [
     icon: "i-heroicons-currency-dollar",
     to: "/invoices",
     permission: "invoice:read;invoice:write;invoice:delete",
+    enabled: false,
   },
 ];
 </script>
@@ -145,7 +150,7 @@ const quickActions = [
       <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <UCard
-          v-for="action in quickActions"
+          v-for="action in quickActions.filter((a) => a.enabled)"
           :key="action.title"
           class="group hover:shadow-md transition-shadow rounded-xl cursor-pointer"
         >
